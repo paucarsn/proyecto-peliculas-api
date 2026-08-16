@@ -3,7 +3,9 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+import os
 
+SECRET_KEY = os.getenv("SECRET_KEY", "clave-de-desarrollo-solo-para-local")
 SECRET_KEY = "$2b$12$KIXQ7jK9vXZ3n8oP2mF5aOxYzT1wRcVbNjLkMqHfDsEg6hIj7kLmO"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
