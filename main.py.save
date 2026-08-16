@@ -1,0 +1,50 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+peliculas = []
+
+class Pelicula(BaseModel):
+    id: int
+    titulo: str
+    año: int
+
+
+@app.get("/")
+def inicio():
+    return {"mensaje": "Hola desde FastAPI!"}
+
+@app.get("/peliculas")
+def obtener_peliculas():
+    return peliculas
+
+@app.get("/peliculas/{id}")
+def obtener_pelicula(id: int):
+    for pelicula in peliculas:
+        if pelicula["id"]==id:
+            return pelicula
+    return {"mensaje": "Pelicula no encontrada"}
+
+@app.post("/peliculas")
+def agregar_pelicula(pelicula: Pelicula):
+    peliculas.append(pelicula.dict())
+    return pelicula
+
+@app.delete("/peliculas/{id}")
+def eliminar_pelicula(id:int):
+    for pelicula in peliculas:
+        if pelicula["id"]==id:
+            peliculas.remove(pelicula)
+            return {"mensaje": "Pelicula eliminada"}
+    return {"error": "Pelicula no encontrada"}
+
+@app.put("/peliculas/{id}")
+def editar_pelicula(id: int, pelicula_actualizada:Pelicula):
+    for pelicula in peliculas:
+        if pelicula["id"]==id:
+            pelicula["titulo"] = pelicula_actualizada.titulo
+            pelicula["año"] = pelicula_actualizada.año
+            return pelicula
+    return {"mensaje": "Pelicula no encontrada"}
+
