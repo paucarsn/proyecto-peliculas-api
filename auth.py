@@ -6,7 +6,6 @@ from fastapi.security import OAuth2PasswordBearer
 import os
 
 SECRET_KEY = os.getenv("SECRET_KEY", "clave-de-desarrollo-solo-para-local")
-SECRET_KEY = "$2b$12$KIXQ7jK9vXZ3n8oP2mF5aOxYzT1wRcVbNjLkMqHfDsEg6hIj7kLmO"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -32,6 +31,5 @@ def obtener_usuario_actual(token:str = Depends(oauth2_scheme)):
         if username is None:
             raise HTTPException(status_code=401, detail="Token invalido")
         return username
-    except JWError:
-        raise HTTPException(status_code=401, detial="Token Invalido")
-
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token Invalido")
