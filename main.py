@@ -91,7 +91,7 @@ def registro(usuario: Usuario, db: Session = Depends(get_db)):
 
     nuevo_usuario = UsuarioDB(
         username=usuario.username,
-        hashed_password=hash_password(usuario.password)
+        hashed_password=hash_password(usuario.password),
         is_superuser=usuario.is_superuser
     )
     db.add(nuevo_usuario)
