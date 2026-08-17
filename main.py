@@ -27,7 +27,6 @@ class Pelicula(BaseModel):
 class Usuario(BaseModel):
     username: str
     password: str
-    is_superuser: bool
 
 def get_db():
     db = SessionLocal()
@@ -92,7 +91,7 @@ def registro(usuario: Usuario, db: Session = Depends(get_db)):
     nuevo_usuario = UsuarioDB(
         username=usuario.username,
         hashed_password=hash_password(usuario.password),
-        is_superuser=usuario.is_superuser
+        is_superuser=False
     )
     db.add(nuevo_usuario)
     db.commit()
