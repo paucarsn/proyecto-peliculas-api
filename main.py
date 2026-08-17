@@ -92,16 +92,17 @@ def registro(usuario: Usuario, db: Session = Depends(get_db)):
     nuevo_usuario = UsuarioDB(
         username=usuario.username,
         hashed_password=hash_password(usuario.password)
+        is_superuser=usuario.is_superuser
     )
     db.add(nuevo_usuario)
     db.commit()
     return {"mensaje": "Usuario creado correctamente"}
 
 @app.post("/login")
-def login(from_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == from_data.username).first()
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == form_data.username).first()
 
-    if not usuario_db or not verificar_password(from_data.password, usuario_db.hashed_password):
+    if not usuario_db or not verificar_password(form_data.password, usuario_db.hashed_password):
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrecto")
 
     token = crear_token({"sub": usuario_db.username})

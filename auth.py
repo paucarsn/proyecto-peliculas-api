@@ -3,7 +3,9 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from database import SessionLocal
 import os
+
 
 SECRET_KEY = os.getenv("SECRET_KEY", "clave-de-desarrollo-solo-para-local")
 ALGORITHM = "HS256"
@@ -35,6 +37,11 @@ def obtener_usuario_actual(token:str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token Invalido")
 
 def obtener_superusuario_actual(usuario:str = Depends(obtener_usuario_actual)):
-    if not usuario.is_superuser:
+    db = SessionLocal()
+    usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == username).first
+    db.close()
+
+    if not usuario_db or not usuario_db.is_superuser:
         raise HTTPException (status_code=403, detail="No tienes permiso")
-    return usuario
+    return usuario_db
+    
