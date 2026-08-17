@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from models import PeliculaDB
-from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual
+from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual, obtener_superusuario_actual
 from models import UsuarioDB
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +27,7 @@ class Pelicula(BaseModel):
 class Usuario(BaseModel):
     username: str
     password: str
+    is_superuser: bool
 
 def get_db():
     db = SessionLocal()
@@ -53,7 +54,7 @@ def obtener_pelicula(id: int, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Pelicula no encontrada")
 
 @app.post("/peliculas")
-def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
     nueva_pelicula = PeliculaDB(titulo=pelicula.titulo, año=pelicula.año)
     db.add(nueva_pelicula)
     db.commit()
@@ -80,7 +81,7 @@ def editar_pelicula(id: int, pelicula_actualizada: Pelicula, db: Session = Depen
         return pelicula
     raise HTTPException(status_code=404, detail="Pelicula no encontrada")
 
-    ######################### USER RELATED ################################
+######################### USER RELATED ################################
 
 @app.post("/registro")
 def registro(usuario: Usuario, db: Session = Depends(get_db)):

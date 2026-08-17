@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from database import Base
 
 class PeliculaDB(Base):
@@ -14,3 +14,5 @@ class UsuarioDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    
+    is_superuser = Column(Boolean, default=False )
