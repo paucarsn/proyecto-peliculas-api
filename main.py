@@ -54,7 +54,7 @@ def obtener_pelicula(id: int, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Pelicula no encontrada")
 
 @app.post("/peliculas")
-def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
     nueva_pelicula = PeliculaDB(titulo=pelicula.titulo, año=pelicula.año)
     db.add(nueva_pelicula)
     db.commit()

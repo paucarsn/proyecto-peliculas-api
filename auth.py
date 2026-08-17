@@ -34,7 +34,7 @@ def obtener_usuario_actual(token:str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Token Invalido")
 
-def obtener_superuser_actual(usuario:str = Depends(obtener_usuario_actual)):
+def obtener_superusuario_actual(usuario:str = Depends(obtener_usuario_actual)):
     if not usuario.is_superuser:
         raise HTTPException (status_code=403, detail="No tienes permiso")
     return usuario
