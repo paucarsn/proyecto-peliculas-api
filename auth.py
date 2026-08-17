@@ -38,10 +38,9 @@ def obtener_usuario_actual(token:str = Depends(oauth2_scheme)):
 
 def obtener_superusuario_actual(usuario:str = Depends(obtener_usuario_actual)):
     db = SessionLocal()
-    usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == username).first
+    usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == usuario).first()
     db.close()
 
     if not usuario_db or not usuario_db.is_superuser:
         raise HTTPException (status_code=403, detail="No tienes permiso")
     return usuario_db
-    
