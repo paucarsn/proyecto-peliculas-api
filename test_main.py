@@ -31,3 +31,4 @@ def test_crear_pelicula():
     print("RESPONSE:", login_response.json())
 
     assert login_response.status_code == 200
+    
