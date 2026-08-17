@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from database import SessionLocal
+from database import SessionLocal, UsuarioDB
 import os
 
 
@@ -22,7 +22,7 @@ def verificar_password(password:str, hashed_password:str):
 
 def crear_token(data:dict):
     to_encode = data.copy()
-    expira = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expira = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expira})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
