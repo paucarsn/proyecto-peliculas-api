@@ -36,7 +36,7 @@ class Tecnologia(ProductoDB):
     marca = Column(String, nullable=True)
     modelo = Column(String, nullable=True)
 
-    __mapper_args_ = {"polymorphic_identity": "tecnologia"}
+    __mapper_args__ = {"polymorphic_identity": "tecnologia"}
 
 class RopaDB(ProductoDB):
     talla = Column(String, nullable=True)
