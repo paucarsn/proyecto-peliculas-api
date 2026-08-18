@@ -69,7 +69,7 @@ def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depen
         detail="Producto no encontrado")
 
 @app.post("/productos")
-def agregar_producto(producto: producto: Annotated[
+def agregar_producto(producto:Annotated[
         Union[
             ProductoRopa,
             ProductoTecnologia,
