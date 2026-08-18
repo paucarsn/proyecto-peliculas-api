@@ -43,9 +43,9 @@ class ProductoLibro(ProductoBase):
 
 ProductoRequest = Annotated[
     Union[
-        RopaRequest,
-        TecnologiaRequest,
-        LibroRequest
+        ProductoRopa,
+        ProductoTecnologia,
+        ProductoLibro
     ],
     Body(discriminator="tipo")
 ]
