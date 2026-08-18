@@ -50,7 +50,7 @@ def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depen
 
 @app.post("/productos")
 def agregar_producto(producto: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    nuevo_producto = ProductosDB(titulo=producto.titulo, año=producto.año)
+    nuevo_producto = ProductosDB(nombre=producto.nombre, precio=producto.precio, tipo=producto.tipo)
     db.add(nuevo_producto)
     db.commit()
     db.refresh(nuevo_producto)
@@ -69,8 +69,9 @@ def eliminar_producto(id: int, db: Session = Depends(get_db), usuario:str = Depe
 def editar_producto(id: int, producto_actualizado: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
     producto = db.query(ProductosDB).filter(ProductosDB.id == id).first()
     if producto:
-        producto.titulo = producto_actualizado.titulo
-        producto.año = producto_actualizado.año
+        producto.nombre = producto_actualizado.nombre
+        producto.precio = producto_actualizado.precio
+        producto.tipo = producto_actualizado.tipo
         db.commit()
         db.refresh(producto)
         return producto

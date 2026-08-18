@@ -22,8 +22,8 @@ class ProductoDB(Base):
     tipo = Column(String)
 
     __mapper_args__ = {
-        "polymorpthic_identity": "producto"
-        "polymorpthic_on": tipo
+        "polymorphic_identity": "producto",
+        "polymorphic_on": tipo
     }
 
 class LibroDB(ProductoDB):
