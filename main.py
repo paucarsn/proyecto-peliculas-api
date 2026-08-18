@@ -42,11 +42,11 @@ def inicio():
 ######################### PELICULAS RELATED ################################
 
 @app.get("/peliculas")
-def obtener_peliculas(db: Session = Depends(get_db)):
+def obtener_peliculas(db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
     return db.query(PeliculaDB).all()
    
 @app.get("/peliculas/{id}")
-def obtener_pelicula(id: int, db: Session = Depends(get_db)):
+def obtener_pelicula(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
     pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
     if pelicula:
         return pelicula
@@ -61,7 +61,7 @@ def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:
     return nueva_pelicula
 
 @app.delete("/peliculas/{id}")
-def eliminar_pelicula(id: int, db: Session = Depends(get_db)):
+def eliminar_pelicula(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
     pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
     if pelicula:
         db.delete(pelicula)
@@ -70,7 +70,7 @@ def eliminar_pelicula(id: int, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Pelicula no encontrada")
 
 @app.put("/peliculas/{id}")
-def editar_pelicula(id: int, pelicula_actualizada: Pelicula, db: Session = Depends(get_db)):
+def editar_pelicula(id: int, pelicula_actualizada: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
     pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
     if pelicula:
         pelicula.titulo = pelicula_actualizada.titulo
