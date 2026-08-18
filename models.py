@@ -43,5 +43,3 @@ class RopaDB(ProductoDB):
     color = Column(String, nullable=True)
 
     __mapper_args__ = {"polymorphic_identity": "ropa"}
-
-
