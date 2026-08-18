@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from models import UsuarioDB, ProductoDB, Libro, Tecnologia, Ropa
 from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual, obtener_superusuario_actual
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union, Literal
+from typing import Union, Literal, Annotated
 
 Base.metadata.create_all(bind=engine)
 
@@ -45,7 +45,14 @@ class Usuario(BaseModel):
     username: str
     password: str
 
-ProductoRequest = Union[ProductoRopa, ProductoTecnologia, ProductoLibro]
+ProductoRequest = Annotated[
+    Union[
+        ProductoRopa,
+        ProductoTecnologia,
+        ProductoLibro
+    ],
+    Field(discriminator="tipo")
+]
 
 def get_db():
     db = SessionLocal()
