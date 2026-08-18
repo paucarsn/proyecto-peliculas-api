@@ -41,6 +41,15 @@ class ProductoLibro(ProductoBase):
     autor: str
     paginas: int
 
+ProductoRequest = Annotated[
+    Union[
+        RopaRequest,
+        TecnologiaRequest,
+        LibroRequest
+    ],
+    Body(discriminator="tipo")
+]
+
 class Usuario(BaseModel):
     username: str
     password: str
@@ -69,14 +78,7 @@ def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depen
         detail="Producto no encontrado")
 
 @app.post("/productos")
-def agregar_producto(producto:Annotated[
-        Union[
-            ProductoRopa,
-            ProductoTecnologia,
-            ProductoLibro
-        ],
-        Body(discriminator="tipo")
-    ], db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
 
     nuevo_producto = ProductoDB(nombre=producto.nombre, precio=producto.precio, tipo=producto.tipo)
     tipo = producto.tipo.lower()
