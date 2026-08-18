@@ -2,9 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
-from models import PeliculaDB
+from models import UsuarioDB, ProductoDB
 from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual, obtener_superusuario_actual
-from models import UsuarioDB
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,9 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Pelicula(BaseModel):
-    titulo: str
-    año: int
+class Producto(BaseModel):
+    nombre: str
+    precio: float
+    tipo: str
 
 class Usuario(BaseModel):
     username: str
@@ -35,50 +35,46 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
-def inicio():
-    return {"mensaje": "Hola desde FastAPI!"}
+######################### PRODUCTOS RELATED ################################
 
-######################### PELICULAS RELATED ################################
-
-@app.get("/peliculas")
-def obtener_peliculas(db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
-    return db.query(PeliculaDB).all()
+@app.get("/productos")
+def obtener_productos(db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+    return db.query(ProductoDB).all()
    
-@app.get("/peliculas/{id}")
-def obtener_pelicula(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
-    pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
-    if pelicula:
-        return pelicula
-    raise HTTPException(status_code=404, detail="Pelicula no encontrada")
+@app.get("/productos/{id}")
+def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+    producto = db.query(ProductoDB).filter(ProductosDB.id == id).first()
+    if producto:
+        return producto
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-@app.post("/peliculas")
-def agregar_pelicula(pelicula: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    nueva_pelicula = PeliculaDB(titulo=pelicula.titulo, año=pelicula.año)
-    db.add(nueva_pelicula)
+@app.post("/productos")
+def agregar_producto(producto: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+    nuevo_producto = ProductosDB(titulo=producto.titulo, año=producto.año)
+    db.add(nuevo_producto)
     db.commit()
-    db.refresh(nueva_pelicula)
-    return nueva_pelicula
+    db.refresh(nuevo_producto)
+    return nuevo_producto
 
-@app.delete("/peliculas/{id}")
-def eliminar_pelicula(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
-    if pelicula:
-        db.delete(pelicula)
+@app.delete("/productos/{id}")
+def eliminar_producto(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+    producto = db.query(ProductosDB).filter(ProductosDB.id == id).first()
+    if producto:
+        db.delete(producto)
         db.commit()
-        return {"mensaje": "Pelicula eliminada"}
-    raise HTTPException(status_code=404, detail="Pelicula no encontrada")
+        return {"mensaje": "Producto eliminado"}
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-@app.put("/peliculas/{id}")
-def editar_pelicula(id: int, pelicula_actualizada: Pelicula, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    pelicula = db.query(PeliculaDB).filter(PeliculaDB.id == id).first()
-    if pelicula:
-        pelicula.titulo = pelicula_actualizada.titulo
-        pelicula.año = pelicula_actualizada.año
+@app.put("/productos/{id}")
+def editar_producto(id: int, producto_actualizado: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+    producto = db.query(ProductosDB).filter(ProductosDB.id == id).first()
+    if producto:
+        producto.titulo = producto_actualizado.titulo
+        producto.año = producto_actualizado.año
         db.commit()
-        db.refresh(pelicula)
-        return pelicula
-    raise HTTPException(status_code=404, detail="Pelicula no encontrada")
+        db.refresh(producto)
+        return producto
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
 
 ######################### USER RELATED ################################
 

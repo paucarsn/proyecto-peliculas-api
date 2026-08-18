@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float
 from database import Base
 
+######################### USUARIOS RELATED ################################
+
 class UsuarioDB(Base):
     __tablename__ = "usuarios"
 
