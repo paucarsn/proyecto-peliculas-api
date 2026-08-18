@@ -26,7 +26,7 @@ class ProductoDB(Base):
         "polymorphic_on": tipo
     }
 
-class LibroDB(ProductoDB):
+class Libro(ProductoDB):
     autor = Column(String, nullable=True) 
     paginas = Column(Integer, nullable=True) 
     
@@ -38,7 +38,7 @@ class Tecnologia(ProductoDB):
 
     __mapper_args__ = {"polymorphic_identity": "tecnologia"}
 
-class RopaDB(ProductoDB):
+class Ropa(ProductoDB):
     talla = Column(String, nullable=True)
     color = Column(String, nullable=True)
 

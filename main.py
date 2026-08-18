@@ -2,10 +2,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
-from models import UsuarioDB, ProductoDB
+from models import UsuarioDB, ProductoDB, Libro, Tecnologia, Ropa
 from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual, obtener_superusuario_actual
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Union, Literal
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,14 +20,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Producto(BaseModel):
+class ProductoBase(BaseModel):
     nombre: str
     precio: float
-    tipo: str
+
+
+
+class ProductoRopa(ProductoBase):
+    tipo: Literal["ropa"]
+    talla: str
+    color: str
+
+class ProductoTecnologia(ProductoBase):
+    tipo: Literal["tecnologia"]
+    marca: str
+    modelo: str
+
+class ProductoLibro(ProductoBase):
+    tipo: Literal["libro"]
+    autor: str
+    paginas: int
 
 class Usuario(BaseModel):
     username: str
     password: str
+
+ProductoRequest = Union[ProductoRopa, ProductoTecnologia, ProductoLibro]
 
 def get_db():
     db = SessionLocal()
@@ -43,14 +62,46 @@ def obtener_productos(db: Session = Depends(get_db), usuario:str = Depends(obten
    
 @app.get("/productos/{id}")
 def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
-    producto = db.query(ProductoDB).filter(ProductosDB.id == id).first()
+    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
     if producto:
         return producto
-    raise HTTPException(status_code=404, detail="Producto no encontrado")
+    raise HTTPException(
+        status_code=404,
+        detail="Producto no encontrado")
 
 @app.post("/productos")
-def agregar_producto(producto: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    nuevo_producto = ProductosDB(nombre=producto.nombre, precio=producto.precio, tipo=producto.tipo)
+def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+    nuevo_producto = ProductoDB(nombre=producto.nombre, precio=producto.precio, tipo=producto.tipo)
+    tipo = producto.tipo.lower()
+    if tipo == "ropa":
+        nuevo_producto = Ropa(
+            nombre=producto.nombre,
+            precio=producto.precio,
+            tipo="ropa",
+            talla=producto.talla,
+            color=producto.color)
+
+    elif tipo == "tecnologia":
+        nuevo_producto = Tecnologia(
+            nombre=producto.nombre,
+            precio=producto.precio,
+            tipo="tecnologia",
+            marca=producto.marca,
+            modelo=producto.modelo)
+
+    elif tipo == "libro":
+        nuevo_producto = Libro(
+            nombre=producto.nombre,
+            precio=producto.precio,
+            tipo="libro",
+            autor=producto.autor,
+            paginas=producto.paginas)
+    
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Tipo de producto no valido")
+
     db.add(nuevo_producto)
     db.commit()
     db.refresh(nuevo_producto)
@@ -58,24 +109,59 @@ def agregar_producto(producto: Producto, db: Session = Depends(get_db), usuario:
 
 @app.delete("/productos/{id}")
 def eliminar_producto(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    producto = db.query(ProductosDB).filter(ProductosDB.id == id).first()
+    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
     if producto:
         db.delete(producto)
         db.commit()
         return {"mensaje": "Producto eliminado"}
-    raise HTTPException(status_code=404, detail="Producto no encontrado")
+    raise HTTPException(
+        status_code=404,
+        detail="Producto no encontrado")
 
 @app.put("/productos/{id}")
-def editar_producto(id: int, producto_actualizado: Producto, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    producto = db.query(ProductosDB).filter(ProductosDB.id == id).first()
-    if producto:
+def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
+    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
+
+    if not producto:
+        raise HTTPException(
+        status_code=404,
+        detail="Producto no encontrado")
+
+    tipo = producto.tipo
+    if tipo=="ropa":
         producto.nombre = producto_actualizado.nombre
         producto.precio = producto_actualizado.precio
-        producto.tipo = producto_actualizado.tipo
+        producto.talla = producto_actualizado.talla
+        producto.color = producto_actualizado.color
+
         db.commit()
         db.refresh(producto)
         return producto
-    raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    elif tipo=="tecnologia":
+        producto.nombre = producto_actualizado.nombre
+        producto.precio = producto_actualizado.precio
+        producto.marca = producto_actualizado.marca
+        producto.modelo = producto_actualizado.modelo
+
+        db.commit()
+        db.refresh(producto)
+        return producto
+
+    elif tipo=="libro":
+        producto.nombre = producto_actualizado.nombre
+        producto.precio = producto_actualizado.precio
+        producto.autor = producto_actualizado.autor
+        producto.paginas = producto_actualizado.paginas
+
+        db.commit()
+        db.refresh(producto)
+        return producto
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Tipo de producto no válido"
+        )
 
 ######################### USER RELATED ################################
 
@@ -83,7 +169,9 @@ def editar_producto(id: int, producto_actualizado: Producto, db: Session = Depen
 def registro(usuario: Usuario, db: Session = Depends(get_db)):
     usuario_existente = db.query(UsuarioDB).filter(UsuarioDB.username == usuario.username).first()
     if usuario_existente:
-        raise HTTPException(status_code=400, detail="Usuario ya existente")
+        raise HTTPException(
+            status_code=400,
+            detail="Usuario ya existente")
 
     nuevo_usuario = UsuarioDB(
         username=usuario.username,
@@ -99,7 +187,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     usuario_db = db.query(UsuarioDB).filter(UsuarioDB.username == form_data.username).first()
 
     if not usuario_db or not verificar_password(form_data.password, usuario_db.hashed_password):
-        raise HTTPException(status_code=401, detail="Usuario o contraseña incorrecto")
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario o contraseña incorrecto")
 
     token = crear_token({"sub": usuario_db.username})
     return {"access_token": token, "token_type": "bearer"}
