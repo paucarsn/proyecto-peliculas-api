@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, Body
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
-from models import UsuarioDB, ProductoDB, Libro, Tecnologia, Ropa
+from models import UsuarioDB, ProductoDB, Libro, Tecnologia, Ropa, CarritoDB
 from auth import hash_password, verificar_password, crear_token, obtener_usuario_actual, obtener_superusuario_actual
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,6 +55,11 @@ class Usuario(BaseModel):
     username: str
     password: str
 
+class Carrito(BaseModel):
+    usuario_id: int
+    producto: str
+    total: float
+    estado: str
 
 def get_db():
     db = SessionLocal()
@@ -80,7 +85,7 @@ def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depen
 
 @app.post("/productos")
 def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-    
+
     tipo = producto.tipo.lower()
     if tipo == "ropa":
         nuevo_producto = Ropa(
@@ -177,29 +182,77 @@ def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session 
             status_code=400,
             detail="Tipo de producto no válido")
 
-@app.put("/productos/{id}/comprar")
-def comprar_producto(id: int ,db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
-    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
+@app.put("/productos/carrito/comprar")
+def comprar_productos(db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+
+    usuario_id = db.query(UsuarioDB).filter(UsuarioDB.id == id).first()
+    carrito_usuario = db.query(CarritoDB).filter(CarritoDB.usuario_id == usuario_id, CarritoDB.estado == "En carrito").all()
+
+    if not carrito_usuario:
+        raise HTTPException(
+            status_code=404,
+            detail="El carrito esta vacio"
+        )
+    for carrito in carrito_usuario:
+        producto = db.query(ProductoDB).filter(ProductoDB.id == carrito.producto_id).first
+
+        if not producto:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Producto {producto.producto_id} no encontrado"
+            )
+        
+        if producto.stock < 1:
+            raise HTTPExcption(
+                status_code=404,
+                detail=f"El producto {producto.produto_id} no tiene stock"
+            )
     
-    if not producto:
+    for carrito in carrito_usuario:
+
+        producto = db.query(ProductoDB).filter(ProductoDB.id == carrito.producto_id).first()
+        producto.stock -=1
+        carrito.estado = "Comprado"
+
+        db.refresh(producto)
+        db.refresh(carrito)
+    
+    db.commit()
+    return {"mensaje": "Producto comprado correctamente","producto": producto}
+
+@app.put("productos/carrito")
+def añadir_al_carrito(db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
+    carrito = db.query(CarritoDB).all()
+    usuario_id = db.query(UsuarioDB).filter(UsuarioDB.id == id).first()
+
+    if producto:
+        carrito.usuario_id = usuario_id
+        carrito.producto = producto.nombre
+        carrito.precio = producto.precio
+        carrito.estado = "En carrito"
+
+        db.commit()
+        db.refresh(carrito)
+
+        return {"mensaje": "Producto añadido al carrito", "carrito": carrito}
+    else:
         raise HTTPException(
             status_code=404,
             detail="Producto No encontrado")
-    
-    if producto.stock >= 1:
-        producto.stock = producto.stock -1
 
-        db.commit()
-        db.refresh(producto)
+@app.get("productos/carrito/historial")
+def ver_carrito(id: int, db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+    usuario_id = db.query(UsuarioDB).filter(UsuarioDB.id == id).first()
+    carrito_usuario = db.query(CarritoDB).filter(CarritoDB.usuario_id == usuario_id).all()
 
-        # Compra del producto
-
-        return {"mensaje": "Producto comprado correctamente","producto": producto}
-
+    if carrito_usuario:
+        return carrito_usuario
     else:
         raise HTTPException(
-            status_code=400,
-            detail="Producto sin stock")
+            status_code=404,
+            detail="No hay productos en el carrito"
+        )
 
 ######################### USER RELATED ################################
 

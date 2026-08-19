@@ -44,3 +44,14 @@ class Ropa(ProductoDB):
     color = Column(String, nullable=True)
 
     __mapper_args__ = {"polymorphic_identity": "ropa"}
+
+######################### PEDIDOS RELATED ################################
+
+class CarritoDB(Base):
+    __tablename__ = "carrito"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, index=True, nullable=False)
+    producto = Column(String)
+    precio = Column(Float)
+    estado = Column(String) # Carrito/Comprado/Entregado->(no creo que se implemente)
