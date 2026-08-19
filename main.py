@@ -23,6 +23,7 @@ app.add_middleware(
 class ProductoBase(BaseModel):
     nombre: str
     precio: float
+    stock: int
 
 
 
@@ -86,6 +87,7 @@ def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), u
         nuevo_producto = Ropa(
             nombre=producto.nombre,
             precio=producto.precio,
+            stock=producto.stock,
             tipo="ropa",
             talla=producto.talla,
             color=producto.color)
@@ -94,6 +96,7 @@ def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), u
         nuevo_producto = Tecnologia(
             nombre=producto.nombre,
             precio=producto.precio,
+            stock=producto.stock,
             tipo="tecnologia",
             marca=producto.marca,
             modelo=producto.modelo)
@@ -102,6 +105,7 @@ def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), u
         nuevo_producto = Libro(
             nombre=producto.nombre,
             precio=producto.precio,
+            stock=producto.stock,
             tipo="libro",
             autor=producto.autor,
             paginas=producto.paginas)
@@ -140,6 +144,7 @@ def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session 
     if tipo=="ropa":
         producto.nombre = producto_actualizado.nombre
         producto.precio = producto_actualizado.precio
+        producto.stock = producto_actualizado.stock
         producto.talla = producto_actualizado.talla
         producto.color = producto_actualizado.color
 
@@ -150,6 +155,7 @@ def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session 
     elif tipo=="tecnologia":
         producto.nombre = producto_actualizado.nombre
         producto.precio = producto_actualizado.precio
+        producto.stock = producto_actualizado.stock
         producto.marca = producto_actualizado.marca
         producto.modelo = producto_actualizado.modelo
 
@@ -160,6 +166,7 @@ def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session 
     elif tipo=="libro":
         producto.nombre = producto_actualizado.nombre
         producto.precio = producto_actualizado.precio
+        producto.stock = producto_actualizado.stock
         producto.autor = producto_actualizado.autor
         producto.paginas = producto_actualizado.paginas
 
@@ -169,8 +176,31 @@ def editar_producto(id: int, producto_actualizado: ProductoRequest, db: Session 
     else:
         raise HTTPException(
             status_code=400,
-            detail="Tipo de producto no válido"
-        )
+            detail="Tipo de producto no válido")
+
+@app.put("/productos/{id}/comprar")
+def comprar_producto(id: int ,db: Session = Depends(get_db), usuario:str = Depends(obtener_usuario_actual)):
+    producto = db.query(ProductoDB).filter(ProductoDB.id == id).first()
+    
+    if not producto:
+        raise HTTPException(
+            status_code=404,
+            detail="Producto No encontrado")
+    
+    if producto.stock >= 1:
+        producto.stock = producto.stock -1
+
+        db.commit()
+        db.refresh(producto)
+
+        # Compra del producto
+
+        return {"mensaje": "Producto comprado correctamente","producto": producto}
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Producto sin stock")
 
 ######################### USER RELATED ################################
 

@@ -19,6 +19,7 @@ class ProductoDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String)
     precio = Column(Float)
+    stock = Column(Integer)
     tipo = Column(String)
 
     __mapper_args__ = {
