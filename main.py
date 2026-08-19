@@ -80,8 +80,7 @@ def obtener_producto(id: int, db: Session = Depends(get_db), usuario:str = Depen
 
 @app.post("/productos")
 def agregar_producto(producto: ProductoRequest, db: Session = Depends(get_db), usuario:str = Depends(obtener_superusuario_actual)):
-
-    nuevo_producto = ProductoDB(nombre=producto.nombre, precio=producto.precio, tipo=producto.tipo)
+    
     tipo = producto.tipo.lower()
     if tipo == "ropa":
         nuevo_producto = Ropa(
